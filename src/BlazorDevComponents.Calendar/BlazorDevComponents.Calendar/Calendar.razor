@@ -1,0 +1,259 @@
+﻿
+<div class="calendar">
+    <div class="row">
+        @if (showNavigationControls)
+        {
+            <div style="margin-right:50px;" @onclick="@(e => Today(e))"><i class="fas fa-calendar-day fa-2x"></i>&nbsp;Today</div>
+            <div @onclick="@(e => PrevMonth(e))"><i class="fas fa-chevron-left fa-2x"></i>&nbsp;Prev</div><h1 style="margin-left:100px;margin-right:100px;padding-left:50px;padding-right:50px;">@Value.ToString("MMMM yyyy")</h1><div @onclick="@(e => NextMonth(e))">&nbsp;Next<i class="fas fa-chevron-right fa-2x"></i></div>
+
+        }
+    </div>
+    <table class="calendar-table">
+        <thead>
+            <tr>
+                <td>
+                    Sun
+                </td>
+                <td>
+                    Mon
+                </td>
+                <td>
+                    Tue
+                </td>
+                <td>
+                    Wed
+                </td>
+                <td>
+                    Thu
+                </td>
+                <td>
+                    Fri
+                </td>
+                <td>
+                    Sat
+                </td>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int row = 0; row < rowsCount; row++)
+            {
+                <tr>
+                    @foreach (var day in calendarDays.Skip(row * 7).Take(7))
+                    {
+                        <td>
+                            @DayTemplate(day)
+                        </td>
+                    }
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>
+
+@if (debugDisplayEnabled)
+{
+    <h3>Calendar</h3>
+    <p>@Value.ToLongDateString()</p>
+    <p>Month: @Value.Day</p>
+    <p>Month: @Value.Month</p>
+    <p>Year: @Value.Year</p>
+    <p>Current Calendar Display: @Value</p>
+}
+
+@code {
+
+    [Parameter]
+    public DateTime Value { get; set; } = DateTime.Now; //default
+
+    [Parameter]
+    public EventCallback<DateTime> ValueChanged { get; set; } //implicit two way binding changed event
+
+    //delegate for the day template
+    [Parameter]
+    public RenderFragment<CalendarDay> DayTemplate { get; set; }
+
+    /// <summary>
+    /// Display navigation controls to text the calendar
+    /// </summary>
+    [Parameter]
+    public bool showNavigationControls { get; set; }
+
+    /// <summary>
+    /// Display additional calendar state in the view
+    /// </summary>
+    [Parameter]
+    public bool debugDisplayEnabled { get; set; }
+
+    /// <summary>
+    /// Display additional calendar state in the console
+    /// </summary>
+    [Parameter]
+    public bool debugConsoleEnabled { get; set; }
+
+
+    //day collection
+    private List<CalendarDay> calendarDays = new List<CalendarDay>();
+
+    //calendar row count
+    int rowsCount = 0;
+
+
+    private async Task SetValue(DateTime value)
+    {
+        if (Value != value)
+        {
+            Value = value;
+
+            if (debugConsoleEnabled)
+            {
+                Console.WriteLine($"Selected date: {value}");
+            }
+
+            await ValueChanged.InvokeAsync(value);
+
+
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateCalendar();
+    }
+
+    async Task UpdateCalendar()
+    {
+        var days = CalculateCalendarDays(Value).Result;
+        var rows = CalculateCalendarRows(days.Count);
+
+        //perform any additional property updates
+        rowsCount = rows;
+        calendarDays = days;
+
+        StateHasChanged();
+    }
+
+    #region Calendar Events
+
+    async Task Today(MouseEventArgs e)
+    {
+        await SetValue(DateTime.Now);
+
+        UpdateCalendar();
+    }
+
+    async Task PrevMonth(MouseEventArgs e)
+    {
+        var month = Value.Month;
+        var year = Value.Year;
+
+        Console.WriteLine(month);
+        Console.WriteLine(year);
+
+        if (month == 1)
+        {
+            month = 12;
+            year--;
+        }
+        else
+        {
+            month--;
+        }
+
+        await SetValue(new DateTime(year, month, 1));
+
+        UpdateCalendar();
+
+    }
+
+    async Task NextMonth(MouseEventArgs e)
+    {
+        var month = Value.Month;
+        var year = Value.Year;
+
+        Console.WriteLine(month);
+        Console.WriteLine(year);
+
+        if (month == 12)
+        {
+            month = 1;
+            year++;
+        }
+        else
+        {
+            month++;
+        }
+
+        await SetValue(new DateTime(year, month, 1));
+
+        UpdateCalendar();
+    }
+
+    #endregion
+
+
+    /// <summary>
+    /// Calculates the days for a given date
+    /// </summary>
+    /// <param name="date"></param>
+    /// <returns>Collection of Calendar Days</returns>
+    async Task<List<CalendarDay>> CalculateCalendarDays(DateTime date)
+    {
+        var calculatedDays = new List<CalendarDay>();
+
+        //calculate the number of previous empty days
+        var firstDayDate = new DateTime(date.Year, date.Month, 1);
+
+        //1 - 7
+        int weekDayNumber = (int)firstDayDate.DayOfWeek;
+
+        Console.WriteLine(weekDayNumber);
+
+        //add month days
+        int numberOfDaysInMonth = DateTime.DaysInMonth(date.Year, date.Month);
+        for (int i = 0; i < numberOfDaysInMonth; i++)
+        {
+            calculatedDays.Add(new CalendarDay
+            {
+                DayNumber = i + 1,
+                Date = new DateTime(date.Year, date.Month, i + 1),
+
+            });
+        }
+
+        if (debugConsoleEnabled)
+        {
+            Console.WriteLine($"First Day Date: {firstDayDate} | Week Day: {weekDayNumber} | Month days: {numberOfDaysInMonth}");
+        }
+
+        return calculatedDays;
+    }
+
+    /// <summary>
+    /// Calulates the required rows for rendering the calendar
+    /// </summary>
+    /// <param name="totalDays"></param>
+    /// <returns>total rows required</returns>
+    private int CalculateCalendarRows(int totalDays)
+    {
+        //calculate number of calendar rows
+        var rowCount = 0;
+        int remaining = totalDays % 7;
+        if (remaining == 0)
+        {
+            rowCount = totalDays / 7;
+        }
+        else
+        {
+            rowCount = Convert.ToInt32(totalDays / 7) + 1;
+        }
+
+        if (debugConsoleEnabled)
+        {
+            Console.WriteLine($"Total Rows: {rowCount}");
+        }
+
+        return rowCount;
+    }
+
+}
