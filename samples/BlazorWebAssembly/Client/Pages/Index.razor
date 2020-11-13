@@ -1,0 +1,28 @@
+﻿@page "/"
+
+<h1>Hello, Calendar!</h1>
+
+<h3 class="lead text-center px-2">@selectedDay.Date.ToLongDateString()</h3>
+<Calendar @bind-Value="selectedDay.Date">
+    <DayTemplate Context="day">
+        @{
+            string currentDayClass = day.Date == DateTime.Now.Date ? "current-day" : "";
+            string selectedDayClass = day == selectedDay ? "selected-day" : "";
+            bool disabledDayAttribute = (day.Date < DateTime.Now.Date) ? true : false;
+        }
+
+        <div disabled="@disabledDayAttribute" class="day @currentDayClass @selectedDayClass" @onclick="() => selectedDay = day">
+            <h3 class="dayNumber">@day.DayNumber</h3>            
+        </div>
+
+    </DayTemplate>
+</Calendar>
+
+@code{
+    private CalendarDay selectedDay = new CalendarDay
+    {
+        Date = DateTime.Now
+    };
+
+
+}
