@@ -1,0 +1,51 @@
+﻿
+.calendar-table {
+    width: 100%;
+    text-align: center;
+    border-collapse: collapse;
+}
+
+    .calendar-table thead {
+        background-color: white;
+    }
+
+    .calendar-table .day {
+        height: 100px;
+        min-width: 125px;
+        border-radius: 5px;
+        background-color: white;
+        cursor: pointer;
+        border: 2px solid #d0d6dc;
+    }
+
+    .calendar-table td:hover {
+        border-color: gray;
+    }
+
+
+    .calendar-table td {
+        border-spacing: 0px;
+    }
+
+@media (max-width: 900px) {
+    .calendar-table .day {
+        width: 100%;
+        height: 50px;
+        min-width: auto;
+        font-size: small;
+    }
+
+    .day .day-event {
+        display: none;
+    }
+}
+
+.calendar-table .selected-day {
+    border: 2px solid;
+    background-color: #F8F9F9;
+    border-color: gold;
+}
+
+.calendar-table .current-day {
+    border: 2px solid black;
+}
